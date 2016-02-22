@@ -10,10 +10,6 @@ class Source(Base):
         self.input_pattern = '\.'
         self.is_bytepos = True
 
-    def get_complete_position(self, context):
-        print('asdf')
-        return self.vim.call('OmniSharp#Complete', 1, 0)
-
     def gather_candidates(self, context):
-        return self.vim.call('OmniSharp#Complete', 0, 0)
+        return [dict(word='asdf', abbr='a', info='asdf', dup=1)]
 
