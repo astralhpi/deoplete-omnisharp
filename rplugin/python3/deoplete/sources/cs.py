@@ -1,5 +1,3 @@
-import deoplete.util
-
 from .base import Base
 
 class Source(Base):
@@ -13,6 +11,7 @@ class Source(Base):
         self.is_bytepos = True
 
     def get_complete_position(self, context):
+        print('asdf')
         return self.vim.call('OmniSharp#Complete', 1, 0)
 
     def gather_candidates(self, context):
