@@ -1,4 +1,10 @@
+import re
+import json
+import urllib
+import urllib.request
+import urllib.parse
 from .base import Base
+from deoplete.util import get_simple_buffer_config, error
 
 class Source(Base):
     def __init__(self, vim):
@@ -7,9 +13,62 @@ class Source(Base):
         self.name = 'cs'
         self.mark = '[CS]'
         self.filetypes = ['cs']
-        self.input_pattern = '\.'
+        self.input_pattern = '\.\w*'
         self.is_bytepos = True
 
+    def get_complete_position(self, context):
+        m = re.search(r'\w*$', context['input'])
+        return m.start() if m else -1
+
     def gather_candidates(self, context):
-        return [dict(word='asdf', abbr='a', info='asdf', dup=1)]
+        host = get_simple_buffer_config(
+                self.vim, 'b:OmniSharp_host', 'g:OmniSharp_host')
+        url = "%s/autocomplete" % host
+        cur = self.vim.current
+        win = cur.window
+        cursor = win.cursor
+        buf = cur.buffer
+        lines = [str(i) for i in buf[:]]
+
+        params = {
+            'line': str(cursor[0]+1),
+            'column': str(cursor[1]+1),
+            'buffer': '\n'.join(lines),
+            'filename': str(cur.buffer.name),
+            'wordToComplete': context['complete_str'],
+            'WantSnippet': True,
+            'WantMethodHeader': True,
+            'WantReturnType': True
+        }
+        data = bytes(json.dumps(params), 'utf-8')
+
+        req = urllib.request.Request(
+            url, data, headers={'Content-Type': 'application/json; charset=UTF-8'},
+            method='POST')
+        with urllib.request.urlopen(req) as f:
+            r = str(f.read(), 'utf-8')
+
+        if r is None or len(r) == 0:
+            return []
+        l = json.loads(r)
+        if l is None:
+            return []
+
+        completions = []
+        for item in l:
+            display = item['MethodHeader'] if item['MethodHeader'] is not None and len(item['MethodHeader']) > 0 else item['CompletionText']
+            display += '\t'
+            display += item['ReturnType'] if item['ReturnType'] is not None and len(item['ReturnType']) > 0 else item['DisplayText']
+
+            completionText = item['Snippet'] if item['Snippet'] is not None and len(item['Snippet']) > 0 else item['DisplayText']
+            description = item['Description']
+
+            completions.append(dict(
+                word=completionText,
+                abbr=display,
+                info=description,
+                dup=1))
+
+        return completions
+
 
