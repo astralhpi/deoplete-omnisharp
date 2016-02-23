@@ -6,6 +6,10 @@ import urllib.parse
 from .base import Base
 from deoplete.util import get_simple_buffer_config, error
 
+def log(w):
+    with open('log.txt', 'a') as f:
+        f.write(w + '\n')
+
 class Source(Base):
     def __init__(self, vim):
         Base.__init__(self, vim)
@@ -32,7 +36,7 @@ class Source(Base):
         lines = [str(i) for i in buf[:]]
 
         params = {
-            'line': str(cursor[0]+1),
+            'line': str(cursor[0]),
             'column': str(cursor[1]+1),
             'buffer': '\n'.join(lines),
             'filename': str(cur.buffer.name),
@@ -43,6 +47,7 @@ class Source(Base):
             'WantDocumentationForEveryCompletionResult': True
         }
         data = bytes(json.dumps(params), 'utf-8')
+        log(json.dumps(params))
 
         req = urllib.request.Request(
             url, data, headers={'Content-Type': 'application/json; charset=UTF-8'},
@@ -50,6 +55,7 @@ class Source(Base):
         with urllib.request.urlopen(req) as f:
             r = str(f.read(), 'utf-8')
 
+        log(r)
         if r is None or len(r) == 0:
             return []
         l = json.loads(r)
