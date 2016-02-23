@@ -12,6 +12,7 @@ class Source(Base):
 
         self.name = 'cs'
         self.mark = '[CS]'
+        self.rank = 500
         self.filetypes = ['cs']
         self.input_pattern = '\.\w*'
         self.is_bytepos = True
