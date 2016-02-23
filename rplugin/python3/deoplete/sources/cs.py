@@ -38,7 +38,8 @@ class Source(Base):
             'wordToComplete': context['complete_str'],
             'WantSnippet': True,
             'WantMethodHeader': True,
-            'WantReturnType': True
+            'WantReturnType': True,
+            'WantDocumentationForEveryCompletionResult': True
         }
         data = bytes(json.dumps(params), 'utf-8')
 
@@ -61,12 +62,13 @@ class Source(Base):
             display += item['ReturnType'] if item['ReturnType'] is not None and len(item['ReturnType']) > 0 else item['DisplayText']
 
             completionText = item['Snippet'] if item['Snippet'] is not None and len(item['Snippet']) > 0 else item['DisplayText']
-            description = item['Description']
+            description = item['Description'].replace('\r\n', '\n') if item['Description'] is not None else ''
 
             completions.append(dict(
                 word=completionText,
                 abbr=display,
                 info=description,
+                icase=1,
                 dup=1))
 
         return completions
