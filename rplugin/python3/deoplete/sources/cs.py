@@ -6,10 +6,6 @@ import urllib.parse
 from .base import Base
 from deoplete.util import get_simple_buffer_config, error
 
-def log(w):
-    with open('log.txt', 'a') as f:
-        f.write(w + '\n')
-
 class Source(Base):
     def __init__(self, vim):
         Base.__init__(self, vim)
@@ -41,13 +37,11 @@ class Source(Base):
             'buffer': '\n'.join(lines),
             'filename': str(cur.buffer.name),
             'wordToComplete': context['complete_str'],
-            'WantSnippet': True,
             'WantMethodHeader': True,
             'WantReturnType': True,
             'WantDocumentationForEveryCompletionResult': True
         }
         data = bytes(json.dumps(params), 'utf-8')
-        log(json.dumps(params))
 
         req = urllib.request.Request(
             url, data, headers={'Content-Type': 'application/json; charset=UTF-8'},
@@ -55,7 +49,6 @@ class Source(Base):
         with urllib.request.urlopen(req) as f:
             r = str(f.read(), 'utf-8')
 
-        log(r)
         if r is None or len(r) == 0:
             return []
         l = json.loads(r)
@@ -68,7 +61,7 @@ class Source(Base):
             display += '\t'
             display += item['ReturnType'] if item['ReturnType'] is not None and len(item['ReturnType']) > 0 else item['DisplayText']
 
-            completionText = item['Snippet'] if item['Snippet'] is not None and len(item['Snippet']) > 0 else item['DisplayText']
+            completionText = item['CompletionText']
             description = item['Description'].replace('\r\n', '\n') if item['Description'] is not None else ''
 
             completions.append(dict(
